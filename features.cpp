@@ -303,17 +303,46 @@ void computeHarrisValues(CFloatImage &srcImage, CFloatImage &harrisImage, CFloat
 // srcImage:  image with Harris values
 // destImage: Assign 1 to local maximum in 3x3 window, 0 otherwise
 
-void computeLocalMaxima(CFloatImage &srcImage, CByteImage &destImage) {
-    printf("TODO: %s:%d\n", __FILE__, __LINE__);
+void computeLocalMaxima(CFloatImage &srcImage,CByteImage &destImage)
+{
+	printf("TODO: %s:%d\n", __FILE__, __LINE__); 
+	int w = srcImage.Shape().width;
+    int h = srcImage.Shape().height;
+	int max;
+	int u,v;
+	int row,col;
+	int threshold=0.015;
 
+	  for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+			max=0;
+
+			if(srcImage.Pixel(x,y,0)>threshold){
+			max=srcImage.Pixel(x,y,0);
+			for(u=-1;u<=1;u++){
+				for(v=-1;v<=1;v++){
+					row=u+y;
+					col=v+x;
+					if(row>=0&&col>=0&&row<h&&col<w&&srcImage.Pixel(col,row,0)>=max)
+						max=srcImage.Pixel(col,row,0);
+					}
+				}
+			}
+
+			if(max!=srcImage.Pixel(x,y,0))
+				destImage.Pixel(x,y,0)=0;
+			else
+				destImage.Pixel(x,y,0)=1;
+		}
+	  }
 }
 
 // TODO: Implement parts of this function
 // Compute Simple descriptors.
-
-void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features) {
+void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features)
+{
     //Create grayscale image used for Harris detection
-    CFloatImage grayImage = ConvertToGray(image);
+    CFloatImage grayImage=ConvertToGray(image);
 
     for (vector<Feature>::iterator i = features.begin(); i != features.end(); i++) {
         Feature &f = *i;
@@ -322,10 +351,20 @@ void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features) {
         int y = f.y;
 
         f.data.resize(5 * 5);
-
+		
         //TO DO---------------------------------------------------------------------
         // The descriptor is a 5x5 window of intensities sampled centered on the feature point.
-        printf("TODO: %s:%d\n", __FILE__, __LINE__);
+		int n=0;
+		for(int i=-2;i<=2;i++)
+			for(int j=-2;j<=2;j++)
+			{
+				if(x+i>=0&&x+i<grayImage.Shape().width&&y+j>=0&&y+j<grayImage.Shape().height)
+					f.data[n]=grayImage.Pixel(x+i,y+j,0);
+				else
+					f.data[n]=0;
+				n++;
+			}
+printf("TODO: %s:%d\n", __FILE__, __LINE__); 
 
     }
 }
