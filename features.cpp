@@ -517,10 +517,54 @@ void ssdMatchFeatures(const FeatureSet &f1, const FeatureSet &f2, vector<Feature
 // You don't need to threshold matches in this function -- just specify the match distance
 // in each FeatureMatch object, as well as the ids of the two matched features (see
 // ssdMatchFeatures for reference).
-
 void ratioMatchFeatures(const FeatureSet &f1, const FeatureSet &f2, vector<FeatureMatch> &matches) {
-    printf("TODO: %s:%d\n", __FILE__, __LINE__);
+ //   printf("TODO: %s:%d\n", __FILE__, __LINE__);
+	 int m = f1.size();
+    int n = f2.size();
 
+    matches.resize(m);
+
+    double d;
+    double dBest;
+	double secondBest;
+    int idBest;
+	int idsecondBest;
+
+    for (int i = 0; i < m; i++) {
+        if(distanceSSD(f1[i].data, f2[0].data)>distanceSSD(f1[i].data, f2[1].data))
+		{
+			dBest=distanceSSD(f1[i].data, f2[0].data);
+			secondBest=distanceSSD(f1[i].data, f2[1].data);
+			idBest=0;
+			idsecondBest=1;
+		}
+		else
+		{
+			dBest=distanceSSD(f1[i].data, f2[1].data);
+			secondBest=distanceSSD(f1[i].data, f2[0].data);
+			idBest=1;
+			idsecondBest=0;
+		}
+
+        for (int j = 2; j < n; j++) {
+            d = distanceSSD(f1[i].data, f2[j].data);
+
+            if (d <= dBest) {
+                secondBest=dBest;
+				idsecondBest=idBest;
+				dBest = d;
+                idBest = f2[j].id;
+            }
+			else if(d<secondBest)
+			{
+				secondBest=d;
+				idsecondBest=f2[j].id;
+			}
+        }
+
+        matches[i].id1 = f1[i].id;
+        matches[i].id2 = idBest;
+        matches[i].distance = (double)dBest/secondBest;
 }
 
 
