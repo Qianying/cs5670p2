@@ -297,23 +297,50 @@ void computeHarrisValues(CFloatImage &srcImage, CFloatImage &harrisImage, CFloat
 }
 
 
-
 //TO DO---------------------------------------------------------------------
 //Loop through the image to compute the harris corner values as described in class
 // srcImage:  image with Harris values
 // destImage: Assign 1 to local maximum in 3x3 window, 0 otherwise
+void computeLocalMaxima(CFloatImage &srcImage,CByteImage &destImage)
+{
+	printf("TODO: %s:%d\n", __FILE__, __LINE__); 
+	int w = srcImage.Shape().width;
+    int h = srcImage.Shape().height;
+	int max;
+	int u,v;
+	int row,col;
+	int threshold=0.015;
 
-void computeLocalMaxima(CFloatImage &srcImage, CByteImage &destImage) {
-    printf("TODO: %s:%d\n", __FILE__, __LINE__);
+	  for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+			max=0;
 
+			if(srcImage.Pixel(x,y,0)>threshold){
+			max=srcImage.Pixel(x,y,0);
+			for(u=-1;u<=1;u++){
+				for(v=-1;v<=1;v++){
+					row=u+y;
+					col=v+x;
+					if(row>=0&&col>=0&&row<h&&col<w&&srcImage.Pixel(col,row,0)>=max)
+						max=srcImage.Pixel(col,row,0);
+					}
+				}
+			}
+
+			if(max!=srcImage.Pixel(x,y,0))
+				destImage.Pixel(x,y,0)=0;
+			else
+				destImage.Pixel(x,y,0)=1;
+		}
+	  }
 }
 
 // TODO: Implement parts of this function
 // Compute Simple descriptors.
-
-void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features) {
+void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features)
+{
     //Create grayscale image used for Harris detection
-    CFloatImage grayImage = ConvertToGray(image);
+    CFloatImage grayImage=ConvertToGray(image);
 
     for (vector<Feature>::iterator i = features.begin(); i != features.end(); i++) {
         Feature &f = *i;
@@ -322,21 +349,34 @@ void ComputeSimpleDescriptors(CFloatImage &image, FeatureSet &features) {
         int y = f.y;
 
         f.data.resize(5 * 5);
-
+		
         //TO DO---------------------------------------------------------------------
         // The descriptor is a 5x5 window of intensities sampled centered on the feature point.
-        printf("TODO: %s:%d\n", __FILE__, __LINE__);
+		int n=0;
+		for(int i=-2;i<=2;i++)
+			for(int j=-2;j<=2;j++)
+			{
+				if(x+i>=0&&x+i<grayImage.Shape().width&&y+j>=0&&y+j<grayImage.Shape().height)
+					f.data[n]=grayImage.Pixel(x+i,y+j,0);
+				else
+					f.data[n]=0;
+				n++;
+			}
+printf("TODO: %s:%d\n", __FILE__, __LINE__); 
 
     }
 }
 
 // TODO: Implement parts of this function
 // Compute MOPs descriptors.
-
-void ComputeMOPSDescriptors(CFloatImage &image, FeatureSet &features) {
+void ComputeMOPSDescriptors(CFloatImage &image, FeatureSet &features)
+{
     // This image represents the window around the feature you need to compute to store as the feature descriptor
     const int windowSize = 8;
     CFloatImage destImage(windowSize, windowSize, 1);
+	CFloatImage grayImage=ConvertToGray(image);
+	CFloatImage filterImage(image.Shape().width,image.Shape().height,1);
+	image_filter(filterImage, grayImage, gaussian5x5, 5, 5, 1, 0);
 
     for (vector<Feature>::iterator i = features.begin(); i != features.end(); i++) {
         Feature &f = *i;
@@ -345,17 +385,68 @@ void ComputeMOPSDescriptors(CFloatImage &image, FeatureSet &features) {
         //You'll need to compute the transform from each pixel in the 8x8 image 
         //to sample from the appropriate pixels in the 40x40 rotated window surrounding the feature
         CTransform3x3 xform;
+		xform.Translation(f.x,f.y);
+		
+		CTransform3x3 translate;
+		translate.Translation(f.x,f.y);
 
-        printf("TODO: %s:%d\n", __FILE__, __LINE__);
+		CTransform3x3 rotate;
+		rotate.Rotation(f.angleRadians);
+
+		CTransform3x3  scale;
+		scale[0][0]=double(41/8);
+		scale[1][1]=double(41/8);
+
+		CTransform3x3 toOrigin;
+		toOrigin.Translation(-4,-4);
+
+		xform=translate.operator*(rotate);
+		xform=xform.operator*(scale);
+		xform=xform.operator*(toOrigin);
+		/*const double toOrigin[9]=
+		{
+			1,0,-4,
+			0,1,-4,
+			0,0,1
+		};
+
+		const double scaleto41[9]=
+		{
+			double(41/8),0,0,
+            0,double(41/8),0,
+			0,0,1
+		};
+
+		const double rotate[9]=
+		{
+			cos(f.angleRadians),-sin(f.angleRadians),0,
+			sin(f.angleRadians),cos(f.angleRadians),0,
+			0,0,1
+		};
+
+		const double translate[9]=
+		{
+			1,0,f.x,
+			0,1,f.y,
+			0,0,1
+		};*/
+				
+
+printf("TODO: %s:%d\n", __FILE__, __LINE__); 
 
 
         //Call the Warp Global function to do the mapping
-        WarpGlobal(image, destImage, xform, eWarpInterpLinear);
+        WarpGlobal(grayImage, destImage, xform, eWarpInterpLinear);
 
         f.data.resize(windowSize * windowSize);
 
         //TODO: fill in the feature descriptor data for a MOPS descriptor
-        printf("TODO: %s:%d\n", __FILE__, __LINE__);
+		for(int p=0;p<windowSize;p++)
+			for(int q=0;q<windowSize;q++)
+			{
+				f.data[p*windowSize+q]=destImage.Pixel(p,q,0);
+		}
+printf("TODO: %s:%d\n", __FILE__, __LINE__); 
 
     }
 }
