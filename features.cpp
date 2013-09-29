@@ -441,10 +441,27 @@ printf("TODO: %s:%d\n", __FILE__, __LINE__);
         f.data.resize(windowSize * windowSize);
 
         //TODO: fill in the feature descriptor data for a MOPS descriptor
+        	float avg,std;
+		float count=0,pfcount=0;
 		for(int p=0;p<windowSize;p++)
 			for(int q=0;q<windowSize;q++)
 			{
-				f.data[p*windowSize+q]=destImage.Pixel(p,q,0);
+				count+=destImage.Pixel(p,q,0);
+		}
+		avg=count/(windowSize*windowSize);
+
+		for(int p=0;p<windowSize;p++)
+			for(int q=0;q<windowSize;q++)
+			{
+				float cha=abs(destImage.Pixel(p,q,0)-avg);
+				pfcount+=pow(cha,2);
+		}
+		pfcount=pfcount/(windowSize*windowSize);
+		pfcount=sqrt(pfcount);
+		for(int p=0;p<windowSize;p++)
+			for(int q=0;q<windowSize;q++)
+			{
+				f.data[p*windowSize+q]=(destImage.Pixel(p,q,0)-avg)/pfcount;
 		}
 printf("TODO: %s:%d\n", __FILE__, __LINE__); 
 
